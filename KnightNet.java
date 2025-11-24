@@ -3,7 +3,7 @@ Dr. Steinberg
 COP3503 Fall 2025
 Programming Assignment 5
 */
-import java.io.;
+import java.io.*;
 import java.util.*;
 
 public class KnightNet {
