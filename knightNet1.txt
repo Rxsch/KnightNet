@@ -1,0 +1,16 @@
+N9,N6,15,8,false
+N1,N6,7,9,false
+N11,N4,6,4,true
+N9,N2,19,10,false
+N10,N4,12,6,false
+N2,N9,9,5,false
+N11,N5,8,5,true
+N5,N6,19,3,false
+N11,N7,4,10,true
+N0,N5,8,8,true
+N2,N10,16,10,false
+N0,N9,19,7,true
+N5,N6,3,3,false
+N8,N10,10,7,false
+N11,N9,16,4,true
+N5,N4,14,6,false
