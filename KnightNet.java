@@ -9,6 +9,7 @@ import java.util.*;
 
 public class KnightNet {
 
+    // Clase interna para representar aristas
     private class Edge implements Comparable<Edge> {
         String from;
         String to;
@@ -29,10 +30,11 @@ public class KnightNet {
         }
     }
 
-    private HashMap<String, ArrayList<Edge>> graph;
+    private HashMap<String, ArrayList<Edge>> graph; // lista de adyacencia
     private HashSet<String> decoyNodes;
     private ArrayList<Edge> mstEdges;
 
+    // Constructor: lee archivo y construye grafo
     public KnightNet(String filename, int maxVisibility) throws IOException {
         graph = new HashMap<>();
         decoyNodes = new HashSet<>();
@@ -63,32 +65,42 @@ public class KnightNet {
         br.close();
     }
 
+    // Retorna nodos reales
     public HashSet<String> getRealNodes() {
         HashSet<String> realNodes = new HashSet<>(graph.keySet());
         realNodes.removeAll(decoyNodes);
         return realNodes;
     }
 
-    public void printGraphRealOnly() {
-        HashSet<String> realNodes = getRealNodes();
-        System.out.println("Graph (real nodes only, excluding decoys):");
-        HashSet<String> printedEdges = new HashSet<>();
+   // Imprime grafo solo con nodos reales y visibilidad <= maxVisibility
+// Imprime grafo solo con nodos reales y visibilidad <= maxVisibility
+public void printGraphRealOnly(int maxVisibility) {
+    HashSet<String> realNodes = getRealNodes();
+    System.out.println("Graph (real nodes only, excluding decoys, maxVisibility <= " + maxVisibility + "):");
+    HashSet<String> printedEdges = new HashSet<>();
 
-        for (String node : realNodes) {
-            for (Edge e : graph.get(node)) {
-                if (e.isDecoy) continue;
-                String other = e.from.equals(node) ? e.to : e.from;
-                if (!realNodes.contains(other)) continue;
-                String key = node.compareTo(other) < 0 ? node + "-" + other : other + "-" + node;
-                if (printedEdges.contains(key)) continue;
-                printedEdges.add(key);
+    for (String node : realNodes) {
+        for (Edge e : graph.getOrDefault(node, new ArrayList<>())) {
+            if (e.isDecoy) continue; 
+            if (e.visibility > maxVisibility) continue; 
+            
+            String other = e.from.equals(node) ? e.to : e.from;
+            if (!realNodes.contains(other)) continue;
 
-                System.out.println(node + " - " + other + " | Cost: " + e.cost + " | Visibility: " + e.visibility);
-            }
+            String key = node.compareTo(other) < 0 ? node + "-" + other : other + "-" + node;
+            if (printedEdges.contains(key)) continue;
+            printedEdges.add(key);
+
+            System.out.println(node + " - " + other + 
+                " | Cost: " + e.cost + 
+                " | Visibility: " + e.visibility);
         }
-        System.out.println();
     }
+    System.out.println();
+}
 
+
+    // MST ajustado: solo nodos reales y aristas <= maxVisibility
     public int computeMSTCost(String startNode, int maxVisibility) {
         mstEdges.clear();
         HashSet<String> visited = new HashSet<>();
@@ -113,20 +125,22 @@ public class KnightNet {
             boolean fromVisited = visited.contains(e.from);
             boolean toVisited = visited.contains(e.to);
 
-            if (fromVisited && !toVisited) nextNode = e.to;
-            else if (!fromVisited && toVisited) nextNode = e.from;
-            else continue;
+            if (fromVisited ^ toVisited) { // solo un nodo visitado
+                nextNode = fromVisited ? e.to : e.from;
+            } else continue;
 
             visited.add(nextNode);
             mstEdges.add(e);
             totalCost += e.cost;
 
+            // agregar aristas del nodo recién visitado
             for (Edge edge : graph.getOrDefault(nextNode, new ArrayList<>())) {
-                if (!visited.contains(edge.from) || !visited.contains(edge.to)) {
-                    if (!edge.isDecoy && edge.visibility <= maxVisibility &&
-                        realNodes.contains(edge.from) && realNodes.contains(edge.to)) {
-                        pq.add(edge);
-                    }
+                boolean edgeFromVisited = visited.contains(edge.from);
+                boolean edgeToVisited = visited.contains(edge.to);
+                if (!(edgeFromVisited && edgeToVisited) &&
+                    !edge.isDecoy && edge.visibility <= maxVisibility &&
+                    realNodes.contains(edge.from) && realNodes.contains(edge.to)) {
+                    pq.add(edge);
                 }
             }
         }
@@ -135,6 +149,7 @@ public class KnightNet {
         return totalCost;
     }
 
+    // Mostrar aristas del MST ordenadas
     public void displayEdges() {
         List<Edge> sortedEdges = new ArrayList<>(mstEdges);
         sortedEdges.sort((a, b) -> {
@@ -155,10 +170,10 @@ public class KnightNet {
         }
     }
 
+    // Elimina nodo y todas sus aristas
     public void removeNode(String node) {
         graph.remove(node);
         decoyNodes.remove(node);
-
         for (String key : graph.keySet()) {
             graph.get(key).removeIf(e -> e.from.equals(node) || e.to.equals(node));
         }
