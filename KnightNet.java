@@ -1,4 +1,4 @@
-/* Daniel Rangosch
+/* Daniel Rangosch 
    Dr. Steinberg
    COP3503 Fall 2025
    Programming Assignment 5
@@ -33,6 +33,7 @@ public class KnightNet {
     private ArrayList<Edge> mstEdges;
     private int maxVisibility;
 
+    // Reads file and initializes graph and decoy nodes
     public KnightNet(String filename, int maxVisibility) throws IOException {
         this.graph = new HashMap<>();
         this.decoyNodes = new HashSet<>();
@@ -64,12 +65,14 @@ public class KnightNet {
         br.close();
     }
 
+    // Returns non-decoy nodes
     public HashSet<String> getRealNodes() {
         HashSet<String> realNodes = new HashSet<>(graph.keySet());
         realNodes.removeAll(decoyNodes);
         return realNodes;
     }
 
+    // Computes MST cost using Prim's algorithm
     public int computeMSTCost(String startNode, int maxVisibility) {
         mstEdges.clear();
 
@@ -116,6 +119,7 @@ public class KnightNet {
         return totalCost;
     }
 
+    // Displays MST edges sorted properly
     public void displayEdges() {
         List<Edge> sortedEdges = new ArrayList<>(mstEdges);
         sortedEdges.sort((a, b) -> {
@@ -136,6 +140,7 @@ public class KnightNet {
         }
     }
 
+    // Removes node and all connected edges
     public void removeNode(String node) {
         graph.remove(node);
         decoyNodes.remove(node);
