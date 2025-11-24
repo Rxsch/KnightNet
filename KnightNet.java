@@ -3,12 +3,12 @@
    COP3503 Fall 2025
    Programming Assignment 5
 */
+
 import java.io.*;
 import java.util.*;
 
 public class KnightNet {
 
-    // Clase interna para representar aristas
     private class Edge implements Comparable<Edge> {
         String from;
         String to;
@@ -29,17 +29,14 @@ public class KnightNet {
         }
     }
 
-    private HashMap<String, ArrayList<Edge>> graph; // lista de adyacencia
+    private HashMap<String, ArrayList<Edge>> graph; // adjacency list
     private HashSet<String> decoyNodes;
     private ArrayList<Edge> mstEdges;
-    private int maxVisibility;
 
-    // Constructor: lee el archivo y crea el grafo
     public KnightNet(String filename, int maxVisibility) throws IOException {
         this.graph = new HashMap<>();
         this.decoyNodes = new HashSet<>();
         this.mstEdges = new ArrayList<>();
-        this.maxVisibility = maxVisibility;
 
         BufferedReader br = new BufferedReader(new FileReader(filename));
         String line;
@@ -66,61 +63,61 @@ public class KnightNet {
         br.close();
     }
 
-    // Retorna nodos no decoy
     public HashSet<String> getRealNodes() {
         HashSet<String> realNodes = new HashSet<>(graph.keySet());
         realNodes.removeAll(decoyNodes);
         return realNodes;
     }
 
-    // Prim's algorithm ajustado
     public int computeMSTCost(String startNode, int maxVisibility) {
         mstEdges.clear();
+
         HashSet<String> visited = new HashSet<>();
         PriorityQueue<Edge> pq = new PriorityQueue<>();
 
-        if (!getRealNodes().contains(startNode)) return -1;
+        if (!graph.containsKey(startNode) || decoyNodes.contains(startNode)) return -1;
 
         visited.add(startNode);
+
         for (Edge e : graph.getOrDefault(startNode, new ArrayList<>())) {
-            if (!e.isDecoy && e.visibility <= maxVisibility)
+            if (!e.isDecoy && e.visibility <= maxVisibility && getRealNodes().contains(e.from) && getRealNodes().contains(e.to)) {
                 pq.add(e);
+            }
         }
 
         int totalCost = 0;
 
         while (!pq.isEmpty()) {
             Edge e = pq.poll();
-            String nextNode = null;
 
-            // Solo agregar si exactamente un nodo ya fue visitado
+            String nextNode = null;
             boolean fromVisited = visited.contains(e.from);
             boolean toVisited = visited.contains(e.to);
 
-            if (fromVisited ^ toVisited) { // XOR: exactly one visited
-                nextNode = fromVisited ? e.to : e.from;
-            } else {
-                continue; // saltar si 0 o 2 nodos visitados
-            }
+            if (fromVisited && !toVisited) nextNode = e.to;
+            else if (!fromVisited && toVisited) nextNode = e.from;
+            else continue; // skip if both visited or both unvisited
 
             visited.add(nextNode);
             mstEdges.add(e);
             totalCost += e.cost;
 
             for (Edge edge : graph.getOrDefault(nextNode, new ArrayList<>())) {
-                boolean edgeFromVisited = visited.contains(edge.from);
-                boolean edgeToVisited = visited.contains(edge.to);
-                if (!(edgeFromVisited && edgeToVisited) && !edge.isDecoy && edge.visibility <= maxVisibility) {
+                boolean edgeFromReal = getRealNodes().contains(edge.from);
+                boolean edgeToReal = getRealNodes().contains(edge.to);
+                if ((!visited.contains(edge.from) || !visited.contains(edge.to)) &&
+                    !edge.isDecoy && edge.visibility <= maxVisibility && edgeFromReal && edgeToReal) {
                     pq.add(edge);
                 }
             }
         }
 
+        // check if MST spans all real nodes
         if (visited.size() < getRealNodes().size()) return -1;
+
         return totalCost;
     }
 
-    // Muestra aristas del MST ordenadas
     public void displayEdges() {
         List<Edge> sortedEdges = new ArrayList<>(mstEdges);
         sortedEdges.sort((a, b) -> {
@@ -141,10 +138,10 @@ public class KnightNet {
         }
     }
 
-    // Remueve nodo y todas sus aristas
     public void removeNode(String node) {
         graph.remove(node);
         decoyNodes.remove(node);
+
         for (String key : graph.keySet()) {
             graph.get(key).removeIf(e -> e.from.equals(node) || e.to.equals(node));
         }
