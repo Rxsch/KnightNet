@@ -67,7 +67,7 @@ public KnightNet(String filename, int maxVisibility) throws IOException {
     br.close();
 }
 
-// Print the entire graph including decoy edges
+// PRINTING WHOLE GRAPH INCLUDING DECOYS
 public void printGraph() {
     System.out.println("Graph (including decoys):");
     for (String node : graph.keySet()) {
@@ -86,6 +86,32 @@ public void printGraph() {
     }
     System.out.println();
 }
+//PRINTING WHOLE GRAPH NOT INCLUDING THE DECOYS
+public void printGraphRealOnly() {
+    HashSet<String> realNodes = getRealNodes();
+    System.out.println("Graph (real nodes only, excluding decoys):");
+
+    HashSet<String> printedEdges = new HashSet<>(); // keep track of printed edges
+
+    for (String node : realNodes) {
+        ArrayList<Edge> edges = graph.get(node);
+        for (Edge e : edges) {
+            if (e.isDecoy) continue;
+            String other = e.from.equals(node) ? e.to : e.from;
+            if (!realNodes.contains(other)) continue;
+
+            // Create a unique key for the edge regardless of order
+            String key = node.compareTo(other) < 0 ? node + "-" + other : other + "-" + node;
+            if (printedEdges.contains(key)) continue; // skip if already printed
+            printedEdges.add(key);
+
+            // Print edge
+            System.out.println(node + " - " + other + " | Cost: " + e.cost + " | Visibility: " + e.visibility);
+        }
+    }
+    System.out.println();
+}
+
 
     // Return non-decoy nodes
     public HashSet<String> getRealNodes() {
