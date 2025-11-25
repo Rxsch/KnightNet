@@ -102,52 +102,31 @@ public void printGraphRealOnly(int maxVisibility) {
 
     // MST ajustado: solo nodos reales y aristas <= maxVisibility
     public int computeMSTCost(String startNode, int maxVisibility) {
-        mstEdges.clear();
-        HashSet<String> visited = new HashSet<>();
-        PriorityQueue<Edge> pq = new PriorityQueue<>();
-        HashSet<String> realNodes = getRealNodes();
+  HashSet<String> realNodes = getRealNodes();
+    HashSet<String> printedEdges = new HashSet<>();
+    int total=0;
+    for (String node : realNodes) {
+        for (Edge e : graph.getOrDefault(node, new ArrayList<>())) {
+            if (e.isDecoy) continue; 
+            if (e.visibility > maxVisibility) continue; 
+            
+            String other = e.from.equals(node) ? e.to : e.from;
+            if (!realNodes.contains(other)) continue;
 
-        if (!realNodes.contains(startNode)) return -1;
+            String key = node.compareTo(other) < 0 ? node + "-" + other : other + "-" + node;
+            if (printedEdges.contains(key)) continue;
+            printedEdges.add(key);
 
-        visited.add(startNode);
-        for (Edge e : graph.getOrDefault(startNode, new ArrayList<>())) {
-            if (!e.isDecoy && e.visibility <= maxVisibility &&
-                realNodes.contains(e.from) && realNodes.contains(e.to)) {
-                pq.add(e);
-            }
+            System.out.println(node + " - " + other + 
+                " | Cost: " + e.cost + 
+                " | Visibility: " + e.visibility);
+                total+=e.cost;
         }
-
-        int totalCost = 0;
-
-        while (!pq.isEmpty()) {
-            Edge e = pq.poll();
-            String nextNode = null;
-            boolean fromVisited = visited.contains(e.from);
-            boolean toVisited = visited.contains(e.to);
-
-            if (fromVisited ^ toVisited) { // solo un nodo visitado
-                nextNode = fromVisited ? e.to : e.from;
-            } else continue;
-
-            visited.add(nextNode);
-            mstEdges.add(e);
-            totalCost += e.cost;
-
-            // agregar aristas del nodo recién visitado
-            for (Edge edge : graph.getOrDefault(nextNode, new ArrayList<>())) {
-                boolean edgeFromVisited = visited.contains(edge.from);
-                boolean edgeToVisited = visited.contains(edge.to);
-                if (!(edgeFromVisited && edgeToVisited) &&
-                    !edge.isDecoy && edge.visibility <= maxVisibility &&
-                    realNodes.contains(edge.from) && realNodes.contains(edge.to)) {
-                    pq.add(edge);
-                }
-            }
-        }
-
-        if (visited.size() < realNodes.size()) return -1;
-        return totalCost;
     }
+      
+    System.out.println();
+    return total;
+}
 
     // Mostrar aristas del MST ordenadas
     public void displayEdges() {

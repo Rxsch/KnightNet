@@ -22,7 +22,7 @@ public class KnightNetDriver
 			KnightNet graph = new KnightNet(inputs[testCase], maxVisibility[testCase]);
 			
 			HashSet<String> realNodes = graph.getRealNodes(); //determine nondecoy nodes
-			graph.printGraphRealOnly(maxVisibility[testCase]);// Esto no deberia existir
+			
 			if(realNodes.size() > 1)
 			{
 				String startNode = realNodes.iterator().next();
